@@ -1,0 +1,42 @@
+package com.library.seat.common;
+
+public class ApiResponse<T> {
+
+    private int code;
+    private String message;
+    private T data;
+
+    private ApiResponse(int code, String message, T data) {
+        this.code = code;
+        this.message = message;
+        this.data = data;
+    }
+
+    public static <T> ApiResponse<T> success(T data) {
+        return new ApiResponse<>(0, "success", data);
+    }
+
+    public static <T> ApiResponse<T> success() {
+        return new ApiResponse<>(0, "success", null);
+    }
+
+    public static <T> ApiResponse<T> fail(ErrorCode errorCode) {
+        return new ApiResponse<>(errorCode.getCode(), errorCode.getMessage(), null);
+    }
+
+    public static <T> ApiResponse<T> fail(int code, String message) {
+        return new ApiResponse<>(code, message, null);
+    }
+
+    public int getCode() {
+        return code;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public T getData() {
+        return data;
+    }
+}
