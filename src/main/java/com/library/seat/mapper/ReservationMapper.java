@@ -32,5 +32,7 @@ public interface ReservationMapper {
 
     int countBySeatIdAndStatus(@Param("seatId") Long seatId, @Param("status") String status);
 
+    List<Reservation> findAllCurrent(@Param("now") LocalDateTime now);
+
     int countByUserId(@Param("userId") Long userId);
 }
