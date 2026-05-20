@@ -9,6 +9,8 @@ import com.library.seat.entity.Reservation;
 import com.library.seat.entity.Seat;
 import com.library.seat.mapper.ReservationMapper;
 import com.library.seat.mapper.SeatMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +23,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class SeatService {
+
+    private static final Logger log = LoggerFactory.getLogger(SeatService.class);
 
     private final SeatMapper seatMapper;
     private final ReservationMapper reservationMapper;
@@ -76,7 +80,8 @@ public class SeatService {
         if (cachedJson != null) {
             try {
                 return objectMapper.readValue(cachedJson, SeatResponse.class);
-            } catch (Exception ignored) {
+            } catch (Exception e) {
+                log.warn("Failed to deserialize seat detail cache: {}", e.getMessage());
             }
         }
 
@@ -108,7 +113,8 @@ public class SeatService {
         try {
             String json = objectMapper.writeValueAsString(resp);
             redisTemplate.opsForValue().set(cacheKey, json, CACHE_TTL);
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            log.warn("Failed to cache seat detail: {}", e.getMessage());
         }
 
         return resp;
@@ -157,7 +163,8 @@ public class SeatService {
         try {
             String json = objectMapper.writeValueAsString(data);
             redisTemplate.opsForValue().set(cacheKey, json, CACHE_TTL);
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            log.warn("Failed to cache seat list: {}", e.getMessage());
         }
     }
 }
