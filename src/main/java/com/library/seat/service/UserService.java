@@ -9,6 +9,8 @@ import com.library.seat.entity.User;
 import com.library.seat.mapper.UserMapper;
 import org.springframework.stereotype.Service;
 
+import java.util.Objects;
+
 @Service
 public class UserService {
 
@@ -22,7 +24,7 @@ public class UserService {
 
     public LoginResponse login(LoginRequest request) {
         User user = userMapper.findByUsername(request.getUsername());
-        if (user == null || !user.getPassword().equals(request.getPassword())) {
+        if (user == null || !Objects.equals(user.getPassword(), request.getPassword())) {
             throw new BusinessException(ErrorCode.LOGIN_FAILED);
         }
 

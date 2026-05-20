@@ -1,6 +1,7 @@
 package com.library.seat.common;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Component;
@@ -33,6 +34,11 @@ public class LoginInterceptor implements HandlerInterceptor {
             request.setAttribute("username", claims.get("username", String.class));
             request.setAttribute("role", claims.get("role", String.class));
             return true;
+        } catch (ExpiredJwtException e) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write("{\"code\":1002,\"message\":\"登录已过期，请重新登录\",\"data\":null}");
+            return false;
         } catch (Exception e) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json;charset=UTF-8");
