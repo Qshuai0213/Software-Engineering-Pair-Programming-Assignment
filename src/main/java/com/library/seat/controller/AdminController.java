@@ -4,6 +4,7 @@ import com.library.seat.common.ApiResponse;
 import com.library.seat.dto.AdminReservationResponse;
 import com.library.seat.dto.AdminStatisticsResponse;
 import com.library.seat.service.AdminService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,15 +21,17 @@ public class AdminController {
 
     @GetMapping("/reservations")
     public ApiResponse<List<AdminReservationResponse>> getReservations(
-            @RequestParam Long userId) {
-        List<AdminReservationResponse> reservations = adminService.getAllReservations(userId);
+            HttpServletRequest request) {
+        String role = (String) request.getAttribute("role");
+        List<AdminReservationResponse> reservations = adminService.getAllReservations(role);
         return ApiResponse.success(reservations);
     }
 
     @GetMapping("/statistics")
     public ApiResponse<AdminStatisticsResponse> getStatistics(
-            @RequestParam Long userId) {
-        AdminStatisticsResponse statistics = adminService.getStatistics(userId);
+            HttpServletRequest request) {
+        String role = (String) request.getAttribute("role");
+        AdminStatisticsResponse statistics = adminService.getStatistics(role);
         return ApiResponse.success(statistics);
     }
 }

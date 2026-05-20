@@ -34,12 +34,12 @@ public class AdminService {
         this.reservationMapper = reservationMapper;
     }
 
-    public List<AdminReservationResponse> getAllReservations(Long adminUserId) {
-        checkAdmin(adminUserId);
+    public List<AdminReservationResponse> getAllReservations(String role) {
+        checkAdmin(role);
 
         List<Reservation> reservations = reservationMapper.findAll();
-        List<User> users = loadAllUsers();
-        List<Seat> seats = loadAllSeats();
+        List<User> users = userMapper.findAll();
+        List<Seat> seats = seatMapper.findAll();
 
         Map<Long, String> usernameMap = users.stream()
                 .collect(Collectors.toMap(User::getId, User::getUsername));
@@ -65,8 +65,8 @@ public class AdminService {
         return result;
     }
 
-    public AdminStatisticsResponse getStatistics(Long adminUserId) {
-        checkAdmin(adminUserId);
+    public AdminStatisticsResponse getStatistics(String role) {
+        checkAdmin(role);
 
         List<Seat> seats = seatMapper.findAll();
         List<Reservation> allReservations = reservationMapper.findAll();
@@ -74,10 +74,8 @@ public class AdminService {
 
         AdminStatisticsResponse stats = new AdminStatisticsResponse();
 
-        // 座位总数
         stats.setTotalSeats(seats.size());
 
-        // 当前状态统计
         AdminStatisticsResponse.CurrentStatus currentStatus = new AdminStatisticsResponse.CurrentStatus();
         int usingCount = 0;
         int reservedCount = 0;
@@ -93,10 +91,8 @@ public class AdminService {
         currentStatus.setAvailable(seats.size() - usingCount - reservedCount);
         stats.setCurrentStatus(currentStatus);
 
-        // 总预约数
         stats.setTotalReservations(allReservations.size());
 
-        // 座位使用率：按座位统计预约次数，降序排列
         Map<Long, Long> seatCountMap = allReservations.stream()
                 .collect(Collectors.groupingBy(Reservation::getSeatId, Collectors.counting()));
         Map<Long, Seat> seatMap = seats.stream()
@@ -117,10 +113,9 @@ public class AdminService {
         seatUsages.sort(Comparator.comparingInt(AdminStatisticsResponse.SeatUsage::getCount).reversed());
         stats.setSeatUsage(seatUsages);
 
-        // 用户预约次数：按用户统计预约次数，降序排列
         Map<Long, Long> userCountMap = allReservations.stream()
                 .collect(Collectors.groupingBy(Reservation::getUserId, Collectors.counting()));
-        Map<Long, String> usernameMap = loadAllUsers().stream()
+        Map<Long, String> usernameMap = userMapper.findAll().stream()
                 .collect(Collectors.toMap(User::getId, User::getUsername));
 
         List<AdminStatisticsResponse.UserUsage> userUsages = new ArrayList<>();
@@ -137,29 +132,9 @@ public class AdminService {
         return stats;
     }
 
-    private void checkAdmin(Long userId) {
-        User user = userMapper.findById(userId);
-        if (user == null) {
-            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
-        }
-        if (!"admin".equals(user.getRole())) {
+    private void checkAdmin(String role) {
+        if (!"admin".equals(role)) {
             throw new BusinessException(ErrorCode.NO_ADMIN_PERMISSION);
         }
-    }
-
-    private List<User> loadAllUsers() {
-        // UserMapper only has findById and findByUsername, no findAll.
-        // Get users from reservation userIds.
-        List<Reservation> reservations = reservationMapper.findAll();
-        return reservations.stream()
-                .map(r -> userMapper.findById(r.getUserId()))
-                .filter(u -> u != null)
-                .collect(Collectors.toMap(User::getId, u -> u, (a, b) -> a))
-                .values().stream()
-                .collect(Collectors.toList());
-    }
-
-    private List<Seat> loadAllSeats() {
-        return seatMapper.findAll();
     }
 }
