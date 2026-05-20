@@ -2,6 +2,7 @@ package com.library.seat.controller;
 
 import com.library.seat.common.ApiResponse;
 import com.library.seat.dto.SeatResponse;
+import com.library.seat.dto.SeatScheduleResponse;
 import com.library.seat.service.SeatService;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,5 +29,11 @@ public class SeatController {
     public ApiResponse<SeatResponse> getSeatDetail(@PathVariable Long id) {
         SeatResponse seat = seatService.getSeatDetail(id);
         return ApiResponse.success(seat);
+    }
+
+    @GetMapping("/seats/{id}/schedule")
+    public ApiResponse<List<SeatScheduleResponse>> getSeatSchedule(@PathVariable Long id) {
+        List<SeatScheduleResponse> schedule = seatService.getSeatSchedule(id);
+        return ApiResponse.success(schedule);
     }
 }

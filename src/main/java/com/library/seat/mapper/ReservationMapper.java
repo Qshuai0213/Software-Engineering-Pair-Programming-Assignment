@@ -30,9 +30,9 @@ public interface ReservationMapper {
 
     List<Reservation> findAll();
 
-    int countBySeatIdAndStatus(@Param("seatId") Long seatId, @Param("status") String status);
-
     List<Reservation> findAllCurrent(@Param("now") LocalDateTime now);
 
-    int countByUserId(@Param("userId") Long userId);
+    List<Reservation> findBySeatIdAndTimeRange(@Param("seatId") Long seatId,
+                                               @Param("startTime") LocalDateTime startTime,
+                                               @Param("endTime") LocalDateTime endTime);
 }

@@ -3,19 +3,31 @@
 <mapper namespace="com.library.seat.mapper.UserMapper">
 
     <select id="findByUsername" resultType="User">
-        SELECT id, username, password, role, create_time, update_time
+        SELECT id, username, password, role, status, create_time, update_time
         FROM user
         WHERE username = #{username}
     </select>
 
     <select id="findById" resultType="User">
-        SELECT id, username, password, role, create_time, update_time
+        SELECT id, username, password, role, status, create_time, update_time
         FROM user
         WHERE id = #{id}
     </select>
 
     <select id="findAll" resultType="User">
-        SELECT id, username, password, role, create_time, update_time
+        SELECT id, username, role, status, create_time, update_time
         FROM user
     </select>
+
+    <select id="findBlockedUsers" resultType="User">
+        SELECT id, username, role, status, create_time, update_time
+        FROM user
+        WHERE status = 'blocked'
+    </select>
+
+    <update id="updateStatus">
+        UPDATE user
+        SET status = #{status}
+        WHERE id = #{id}
+    </update>
 </mapper>

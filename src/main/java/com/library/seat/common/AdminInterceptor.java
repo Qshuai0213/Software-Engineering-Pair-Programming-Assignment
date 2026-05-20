@@ -1,5 +1,6 @@
 package com.library.seat.common;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Component;
@@ -8,6 +9,12 @@ import org.springframework.web.servlet.HandlerInterceptor;
 
 @Component
 public class AdminInterceptor implements HandlerInterceptor {
+
+    private final ObjectMapper objectMapper;
+
+    public AdminInterceptor(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
+    }
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response,
@@ -24,7 +31,8 @@ public class AdminInterceptor implements HandlerInterceptor {
         if (!"admin".equals(role)) {
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             response.setContentType("application/json;charset=UTF-8");
-            response.getWriter().write("{\"code\":4001,\"message\":\"无管理员权限\",\"data\":null}");
+            response.getWriter().write(objectMapper.writeValueAsString(
+                    ApiResponse.fail(ErrorCode.NO_ADMIN_PERMISSION)));
             return false;
         }
 

@@ -1,5 +1,6 @@
 package com.library.seat.common;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -11,9 +12,11 @@ import org.springframework.web.servlet.HandlerInterceptor;
 public class LoginInterceptor implements HandlerInterceptor {
 
     private final JwtUtil jwtUtil;
+    private final ObjectMapper objectMapper;
 
-    public LoginInterceptor(JwtUtil jwtUtil) {
+    public LoginInterceptor(JwtUtil jwtUtil, ObjectMapper objectMapper) {
         this.jwtUtil = jwtUtil;
+        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -21,9 +24,7 @@ public class LoginInterceptor implements HandlerInterceptor {
                              Object handler) throws Exception {
         String header = request.getHeader("Authorization");
         if (header == null || !header.startsWith("Bearer ")) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.setContentType("application/json;charset=UTF-8");
-            response.getWriter().write("{\"code\":1002,\"message\":\"用户未登录\",\"data\":null}");
+            writeUnauthorized(response, "用户未登录");
             return false;
         }
 
@@ -35,15 +36,18 @@ public class LoginInterceptor implements HandlerInterceptor {
             request.setAttribute("role", claims.get("role", String.class));
             return true;
         } catch (ExpiredJwtException e) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.setContentType("application/json;charset=UTF-8");
-            response.getWriter().write("{\"code\":1002,\"message\":\"登录已过期，请重新登录\",\"data\":null}");
+            writeUnauthorized(response, "登录已过期，请重新登录");
             return false;
         } catch (Exception e) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.setContentType("application/json;charset=UTF-8");
-            response.getWriter().write("{\"code\":1002,\"message\":\"用户未登录\",\"data\":null}");
+            writeUnauthorized(response, "用户未登录");
             return false;
         }
+    }
+
+    private void writeUnauthorized(HttpServletResponse response, String message) throws Exception {
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType("application/json;charset=UTF-8");
+        response.getWriter().write(objectMapper.writeValueAsString(
+                ApiResponse.fail(ErrorCode.NOT_LOGIN.getCode(), message)));
     }
 }

@@ -8,14 +8,18 @@ public enum ErrorCode {
     LOGIN_FAILED(1001, "用户名或密码错误"),
     NOT_LOGIN(1002, "用户未登录"),
     USER_NOT_FOUND(1003, "用户不存在"),
+    USER_BLOCKED(1004, "该用户已被拉黑，无法创建预约"),
 
     // 预约业务 2000-2999
     RESERVATION_CONFLICT(2001, "预约时间与已有预约冲突"),
+    ACTIVE_RESERVATION_EXISTS(2009, "您当前已有有效预约，请先取消后再预约"),
     START_TIME_IN_PAST(2002, "预约开始时间不能早于当前时间"),
     DURATION_TOO_SHORT(2003, "单次预约时间不能少于1小时"),
     TIME_OUT_OF_RANGE(2004, "预约时间不在开放时间内"),
     RESERVATION_NOT_FOUND(2005, "预约记录不存在"),
     NOT_OWN_RESERVATION(2006, "只能取消自己的预约"),
+    CHECK_IN_TIME_INVALID(2007, "当前时间不在预约时间范围内，无法签到"),
+    RESERVATION_STATUS_NOT_ALLOWED(2008, "当前预约状态不允许此操作"),
 
     // 座位业务 3000-3999
     SEAT_NOT_FOUND(3001, "座位不存在"),

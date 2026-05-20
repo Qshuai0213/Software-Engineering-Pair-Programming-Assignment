@@ -3,6 +3,7 @@ package com.library.seat.controller;
 import com.library.seat.common.ApiResponse;
 import com.library.seat.dto.AdminReservationResponse;
 import com.library.seat.dto.AdminStatisticsResponse;
+import com.library.seat.dto.UserResponse;
 import com.library.seat.service.AdminService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.*;
@@ -33,5 +34,35 @@ public class AdminController {
         String role = (String) request.getAttribute("role");
         AdminStatisticsResponse statistics = adminService.getStatistics(role);
         return ApiResponse.success(statistics);
+    }
+
+    @PutMapping("/users/{id}/block")
+    public ApiResponse<Void> blockUser(@PathVariable Long id,
+                                       HttpServletRequest request) {
+        String role = (String) request.getAttribute("role");
+        adminService.blockUser(role, id);
+        return ApiResponse.success();
+    }
+
+    @PutMapping("/users/{id}/unblock")
+    public ApiResponse<Void> unblockUser(@PathVariable Long id,
+                                         HttpServletRequest request) {
+        String role = (String) request.getAttribute("role");
+        adminService.unblockUser(role, id);
+        return ApiResponse.success();
+    }
+
+    @GetMapping("/users/blocked")
+    public ApiResponse<List<UserResponse>> getBlockedUsers(HttpServletRequest request) {
+        String role = (String) request.getAttribute("role");
+        List<UserResponse> users = adminService.getBlockedUsers(role);
+        return ApiResponse.success(users);
+    }
+
+    @GetMapping("/users")
+    public ApiResponse<List<UserResponse>> getAllUsers(HttpServletRequest request) {
+        String role = (String) request.getAttribute("role");
+        List<UserResponse> users = adminService.getAllUsers(role);
+        return ApiResponse.success(users);
     }
 }

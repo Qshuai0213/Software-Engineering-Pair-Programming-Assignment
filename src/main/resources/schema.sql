@@ -16,11 +16,13 @@ CREATE TABLE `user` (
     `username` VARCHAR(50) NOT NULL COMMENT '用户名',
     `password` VARCHAR(100) NOT NULL COMMENT '密码，课程项目阶段可先使用明文，后续可替换为加密存储',
     `role` VARCHAR(20) NOT NULL DEFAULT 'user' COMMENT '角色：user/admin',
+    `status` VARCHAR(20) NOT NULL DEFAULT 'normal' COMMENT '状态：normal/blocked',
     `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_user_username` (`username`),
-    KEY `idx_user_role` (`role`)
+    KEY `idx_user_role` (`role`),
+    KEY `idx_user_status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户表';
 
 -- 座位表

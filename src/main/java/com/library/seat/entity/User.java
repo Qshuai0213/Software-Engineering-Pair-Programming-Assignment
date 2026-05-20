@@ -8,6 +8,7 @@ public class User {
     private String username;
     private String password;
     private String role;
+    private String status;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
 
@@ -41,6 +42,14 @@ public class User {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 
     public LocalDateTime getCreateTime() {

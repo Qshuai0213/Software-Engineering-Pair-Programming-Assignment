@@ -72,13 +72,14 @@
           AND end_time &gt; #{now}
     </select>
 
-    <select id="countBySeatIdAndStatus" resultType="int">
-        SELECT COUNT(*) FROM reservation
-        WHERE seat_id = #{seatId} AND status = #{status}
+    <select id="findBySeatIdAndTimeRange" resultType="Reservation">
+        SELECT id, user_id, seat_id, start_time, end_time, status, check_in_time, cancel_time, create_time, update_time
+        FROM reservation
+        WHERE seat_id = #{seatId}
+          AND status IN ('reserved', 'checked_in')
+          AND start_time &lt; #{endTime}
+          AND end_time &gt; #{startTime}
+        ORDER BY start_time ASC
     </select>
 
-    <select id="countByUserId" resultType="int">
-        SELECT COUNT(*) FROM reservation
-        WHERE user_id = #{userId}
-    </select>
 </mapper>

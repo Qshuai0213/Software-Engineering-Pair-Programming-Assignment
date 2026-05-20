@@ -5,17 +5,22 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.library.seat.common.BusinessException;
 import com.library.seat.common.ErrorCode;
 import com.library.seat.dto.SeatResponse;
+import com.library.seat.dto.SeatScheduleResponse;
 import com.library.seat.entity.Reservation;
 import com.library.seat.entity.Seat;
+import com.library.seat.entity.User;
 import com.library.seat.mapper.ReservationMapper;
 import com.library.seat.mapper.SeatMapper;
+import com.library.seat.mapper.UserMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +33,7 @@ public class SeatService {
 
     private final SeatMapper seatMapper;
     private final ReservationMapper reservationMapper;
+    private final UserMapper userMapper;
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
 
@@ -37,10 +43,12 @@ public class SeatService {
 
     public SeatService(SeatMapper seatMapper,
                        ReservationMapper reservationMapper,
+                       UserMapper userMapper,
                        StringRedisTemplate redisTemplate,
                        ObjectMapper objectMapper) {
         this.seatMapper = seatMapper;
         this.reservationMapper = reservationMapper;
+        this.userMapper = userMapper;
         this.redisTemplate = redisTemplate;
         this.objectMapper = objectMapper;
     }
@@ -118,6 +126,34 @@ public class SeatService {
         }
 
         return resp;
+    }
+
+    public List<SeatScheduleResponse> getSeatSchedule(Long seatId) {
+        Seat seat = seatMapper.findById(seatId);
+        if (seat == null) {
+            throw new BusinessException(ErrorCode.SEAT_NOT_FOUND);
+        }
+
+        LocalDate today = LocalDate.now();
+        LocalDateTime start = today.atTime(LocalTime.of(8, 0));
+        LocalDateTime end = today.plusDays(1).atTime(LocalTime.of(21, 0));
+
+        List<Reservation> reservations = reservationMapper.findBySeatIdAndTimeRange(seatId, start, end);
+
+        List<SeatScheduleResponse> result = new ArrayList<>();
+        for (Reservation r : reservations) {
+            SeatScheduleResponse item = new SeatScheduleResponse();
+            item.setReservationId(r.getId());
+            item.setStartTime(r.getStartTime());
+            item.setEndTime(r.getEndTime());
+            item.setStatus(r.getStatus());
+            User user = userMapper.findById(r.getUserId());
+            if (user != null) {
+                item.setUsername(user.getUsername());
+            }
+            result.add(item);
+        }
+        return result;
     }
 
     private Map<Long, Reservation> buildCurrentReservationMap(LocalDateTime now) {

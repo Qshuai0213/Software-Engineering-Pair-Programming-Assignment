@@ -4,6 +4,7 @@ import com.library.seat.common.BusinessException;
 import com.library.seat.common.ErrorCode;
 import com.library.seat.dto.AdminReservationResponse;
 import com.library.seat.dto.AdminStatisticsResponse;
+import com.library.seat.dto.UserResponse;
 import com.library.seat.entity.Reservation;
 import com.library.seat.entity.Seat;
 import com.library.seat.entity.User;
@@ -114,6 +115,7 @@ public class AdminService {
         stats.setSeatUsage(seatUsages);
 
         Map<Long, Long> userCountMap = allReservations.stream()
+                .filter(r -> !"cancelled".equals(r.getStatus()))
                 .collect(Collectors.groupingBy(Reservation::getUserId, Collectors.counting()));
         Map<Long, String> usernameMap = userMapper.findAll().stream()
                 .collect(Collectors.toMap(User::getId, User::getUsername));
@@ -136,5 +138,59 @@ public class AdminService {
         if (!"admin".equals(role)) {
             throw new BusinessException(ErrorCode.NO_ADMIN_PERMISSION);
         }
+    }
+
+    public void blockUser(String role, Long userId) {
+        checkAdmin(role);
+
+        User user = userMapper.findById(userId);
+        if (user == null) {
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        userMapper.updateStatus(userId, "blocked");
+    }
+
+    public void unblockUser(String role, Long userId) {
+        checkAdmin(role);
+
+        User user = userMapper.findById(userId);
+        if (user == null) {
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        userMapper.updateStatus(userId, "normal");
+    }
+
+    public List<UserResponse> getBlockedUsers(String role) {
+        checkAdmin(role);
+
+        List<User> users = userMapper.findBlockedUsers();
+        List<UserResponse> result = new ArrayList<>();
+        for (User u : users) {
+            UserResponse resp = new UserResponse();
+            resp.setId(u.getId());
+            resp.setUsername(u.getUsername());
+            resp.setRole(u.getRole());
+            resp.setStatus(u.getStatus());
+            result.add(resp);
+        }
+        return result;
+    }
+
+    public List<UserResponse> getAllUsers(String role) {
+        checkAdmin(role);
+
+        List<User> users = userMapper.findAll();
+        List<UserResponse> result = new ArrayList<>();
+        for (User u : users) {
+            UserResponse resp = new UserResponse();
+            resp.setId(u.getId());
+            resp.setUsername(u.getUsername());
+            resp.setRole(u.getRole());
+            resp.setStatus(u.getStatus());
+            result.add(resp);
+        }
+        return result;
     }
 }

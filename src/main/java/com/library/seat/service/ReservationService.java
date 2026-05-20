@@ -6,8 +6,11 @@ import com.library.seat.dto.CreateReservationRequest;
 import com.library.seat.dto.ReservationResponse;
 import com.library.seat.entity.Reservation;
 import com.library.seat.entity.Seat;
+import com.library.seat.entity.User;
 import com.library.seat.mapper.ReservationMapper;
 import com.library.seat.mapper.SeatMapper;
+import com.library.seat.mapper.UserMapper;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -16,6 +19,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class ReservationService {
@@ -26,10 +30,15 @@ public class ReservationService {
 
     private final ReservationMapper reservationMapper;
     private final SeatMapper seatMapper;
+    private final UserMapper userMapper;
+    private final StringRedisTemplate redisTemplate;
 
-    public ReservationService(ReservationMapper reservationMapper, SeatMapper seatMapper) {
+    public ReservationService(ReservationMapper reservationMapper, SeatMapper seatMapper,
+                              UserMapper userMapper, StringRedisTemplate redisTemplate) {
         this.reservationMapper = reservationMapper;
         this.seatMapper = seatMapper;
+        this.userMapper = userMapper;
+        this.redisTemplate = redisTemplate;
     }
 
     public ReservationResponse createReservation(Long userId, CreateReservationRequest request) {
@@ -64,10 +73,16 @@ public class ReservationService {
             throw new BusinessException(ErrorCode.SEAT_NOT_FOUND);
         }
 
+        // 检查用户是否被拉黑
+        User user = userMapper.findById(userId);
+        if (user != null && "blocked".equals(user.getStatus())) {
+            throw new BusinessException(ErrorCode.USER_BLOCKED);
+        }
+
         // 同一用户只能有一个有效预约
         List<Reservation> activeList = reservationMapper.findActiveByUserId(userId, now);
         if (!activeList.isEmpty()) {
-            throw new BusinessException(ErrorCode.RESERVATION_CONFLICT);
+            throw new BusinessException(ErrorCode.ACTIVE_RESERVATION_EXISTS);
         }
 
         // 时间冲突判断
@@ -84,6 +99,8 @@ public class ReservationService {
         reservation.setEndTime(endTime);
         reservation.setStatus("reserved");
         reservationMapper.insert(reservation);
+
+        evictSeatCache();
 
         return toResponse(reservation, seat);
     }
@@ -107,9 +124,10 @@ public class ReservationService {
             throw new BusinessException(ErrorCode.NOT_OWN_RESERVATION);
         }
         if (!"reserved".equals(reservation.getStatus()) && !"checked_in".equals(reservation.getStatus())) {
-            throw new BusinessException(ErrorCode.RESERVATION_NOT_FOUND);
+            throw new BusinessException(ErrorCode.RESERVATION_STATUS_NOT_ALLOWED);
         }
         reservationMapper.updateStatus(reservationId, "cancelled");
+        evictSeatCache();
     }
 
     public void checkIn(Long userId, Long reservationId) {
@@ -124,15 +142,16 @@ public class ReservationService {
             return;
         }
         if (!"reserved".equals(reservation.getStatus())) {
-            throw new BusinessException(ErrorCode.RESERVATION_NOT_FOUND);
+            throw new BusinessException(ErrorCode.RESERVATION_STATUS_NOT_ALLOWED);
         }
 
         LocalDateTime now = LocalDateTime.now();
         if (now.isBefore(reservation.getStartTime()) || now.isAfter(reservation.getEndTime())) {
-            throw new BusinessException(ErrorCode.RESERVATION_NOT_FOUND);
+            throw new BusinessException(ErrorCode.CHECK_IN_TIME_INVALID);
         }
 
         reservationMapper.updateStatus(reservationId, "checked_in");
+        evictSeatCache();
     }
 
     private boolean isOpenTime(LocalDateTime dateTime) {
@@ -155,5 +174,16 @@ public class ReservationService {
             resp.setLocation(seat.getLocation());
         }
         return resp;
+    }
+
+    private void evictSeatCache() {
+        try {
+            Set<String> keys = redisTemplate.keys("seats:*");
+            if (keys != null && !keys.isEmpty()) {
+                redisTemplate.delete(keys);
+            }
+        } catch (Exception e) {
+            // cache eviction failure is non-critical
+        }
     }
 }

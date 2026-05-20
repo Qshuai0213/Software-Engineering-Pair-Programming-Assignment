@@ -14,4 +14,8 @@ public interface UserMapper {
     User findById(@Param("id") Long id);
 
     List<User> findAll();
+
+    List<User> findBlockedUsers();
+
+    int updateStatus(@Param("id") Long id, @Param("status") String status);
 }
