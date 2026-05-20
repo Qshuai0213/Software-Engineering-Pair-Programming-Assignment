@@ -106,7 +106,7 @@ public class ReservationService {
         if (!reservation.getUserId().equals(userId)) {
             throw new BusinessException(ErrorCode.NOT_OWN_RESERVATION);
         }
-        if (!"reserved".equals(reservation.getStatus())) {
+        if (!"reserved".equals(reservation.getStatus()) && !"checked_in".equals(reservation.getStatus())) {
             throw new BusinessException(ErrorCode.RESERVATION_NOT_FOUND);
         }
         reservationMapper.updateStatus(reservationId, "cancelled");
@@ -119,6 +119,9 @@ public class ReservationService {
         }
         if (!reservation.getUserId().equals(userId)) {
             throw new BusinessException(ErrorCode.NOT_OWN_RESERVATION);
+        }
+        if ("checked_in".equals(reservation.getStatus())) {
+            return;
         }
         if (!"reserved".equals(reservation.getStatus())) {
             throw new BusinessException(ErrorCode.RESERVATION_NOT_FOUND);
