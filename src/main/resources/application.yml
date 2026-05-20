@@ -25,6 +25,10 @@ mybatis:
   configuration:
     map-underscore-to-camel-case: true
 
+jwt:
+  secret: ${JWT_SECRET:library-seat-reservation-system-secret-key-must-be-at-least-256-bits}
+  expiration: ${JWT_EXPIRATION:86400000}
+
 logging:
   level:
     com.library.seat.mapper: debug
