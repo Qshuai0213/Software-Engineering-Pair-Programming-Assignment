@@ -13,4 +13,9 @@
         FROM user
         WHERE id = #{id}
     </select>
+
+    <select id="findAll" resultType="User">
+        SELECT id, username, password, role, create_time, update_time
+        FROM user
+    </select>
 </mapper>
